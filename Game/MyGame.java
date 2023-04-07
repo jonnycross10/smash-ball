@@ -1,7 +1,8 @@
-package a2;
+package Game;
 
 import tage.*;
 import tage.input.InputManager;
+import tage.networking.IGameConnection.ProtocolType;
 import tage.nodeControllers.BounceController;
 import tage.nodeControllers.RotationController;
 import tage.shapes.*;
@@ -13,8 +14,6 @@ import java.io.*;
 import javax.swing.*;
 import org.joml.*;
 
-import a2.FwdAction;
-import a2.TurnAction;
 
 import java.util.Random;
 
@@ -29,8 +28,8 @@ public class MyGame extends VariableFrameRateGame
 	private double lastFrameTime, currFrameTime, elapsTime;
 
 	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, child1, child2, child3;
-	private ObjShape dolS, cubS, linxS, linyS, linzS;
-	private TextureImage doltx, prize, grass, prizeAttained;
+	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS;
+	private TextureImage ghostText, doltx, prize, grass, prizeAttained;
 	private Light light1;
 
 	private int score;
@@ -46,6 +45,13 @@ public class MyGame extends VariableFrameRateGame
 	private NodeController rc,bc;
 
 	private CameraOrbit3D orbitCam;
+
+	private GhostManager gm;
+	private String serverAddress;
+	private int serverPort;
+	private ProtocolType serverProtocol;
+	private ProtocolClient protClient;
+	private boolean isClientConnected = false;
 
 	public MyGame() { super(); }
 
@@ -159,10 +165,7 @@ public class MyGame extends VariableFrameRateGame
 		im = engine.getInputManager();
 		FwdAction fwdAction = new FwdAction(this);
 		TurnAction turnAction = new TurnAction(this);
-		PitchAction pitchAction = new PitchAction(this);
-		RideAction ride = new RideAction(this);
-		ZoomAction zoom = new ZoomAction(this);
-		PanAction pan = new PanAction(this);
+		
 
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.A, turnAction,
 		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
@@ -172,15 +175,6 @@ public class MyGame extends VariableFrameRateGame
 
 		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.X, turnAction,
 			InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.UP, pitchAction,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.DOWN, pitchAction,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.RY, pitchAction,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.W, fwdAction,
 			InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
@@ -193,24 +187,6 @@ public class MyGame extends VariableFrameRateGame
 		
 		//im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._0, ride,
 		//InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.Y, zoom,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.H, zoom,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.I, pan,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.K, pan,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.J, pan,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
-
-		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.L, pan,
-		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 
 
 		// create the orbit view
@@ -257,19 +233,6 @@ public class MyGame extends VariableFrameRateGame
 		//TODO organize checks in a better way
 		updateScore();
 
-		if(isMounted) {
-			//mountCam();
-			// recenter if dolphin is below world
-			reCenterDolphBelowMap();
-		}
-		
-		if(!camCloseToDol()) dismountCam();
-		if(!isMounted) {
-			
-			// recenter if cam is below world
-			reCenterCamBelowMap();
-		}
-
 		// double score if finished in under a minute and a half
 		if(elapsTimeSec <90 && score == 3) score = score*2;
 
@@ -290,7 +253,6 @@ public class MyGame extends VariableFrameRateGame
 		// ------------- positioning the main camera -------------
 		(engine.getRenderSystem().getViewport("MAIN").getCamera()).setLocation(new Vector3f(0,0,5));
 
-
 		Viewport smallVP = engine.getRenderSystem().getViewport("BR");
 		
 		Camera smallCam = smallVP.getCamera();
@@ -301,36 +263,6 @@ public class MyGame extends VariableFrameRateGame
 		smallCam.setN(new Vector3f(0,-1,0));
 	}
 
-	@Override
-	public void keyPressed(KeyEvent e)
-	{ 	Vector3f loc, fwd, up, right, newLocation;
-		switch (e.getKeyCode())
-			{ case KeyEvent.VK_1:
-				paused = !paused;
-				break;
-			case KeyEvent.VK_2: // move dolphin forward
-				fwd = dol.getWorldForwardVector();
-				loc = dol.getWorldLocation();
-				newLocation = loc.add(fwd.mul(.02f));
-				dol.setLocalLocation(newLocation);
-				break;
-			case KeyEvent.VK_3: // move dolphin backward
-				fwd = dol.getWorldForwardVector();
-				loc = dol.getWorldLocation();
-				newLocation = loc.add(fwd.mul(-.02f));
-				dol.setLocalLocation(newLocation);
-				break;
-			/* 
-			case KeyEvent.VK_SPACE: // view from dolphin
-				if(isMounted){
-					dismountCam(); //somewhat redundant
-				}
-				isMounted = !isMounted;
-				break;
-			*/
-			}
-		super.keyPressed(e);
-	}
 
 	public GameObject getAvatar() { return dol; }
 
@@ -341,79 +273,7 @@ public class MyGame extends VariableFrameRateGame
 	public Engine getEngine() { return engine; }
 
 	public void updateScore(){
-		//checks if cam is intersecting with prize
-		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
-		Vector3f camLoc = cam.getLocation();
-		Vector3f cub1Loc = cub1.getWorldLocation();
-		Vector3f cub2Loc = cub2.getWorldLocation();
-		Vector3f cub3Loc = cub3.getWorldLocation();
-		//if so, update score and delete prize 
-		//TODO could be done with loop through an arraylist if time
-		if(withinDistance(camLoc, cub1Loc, camPrizeProximity) && cub1Active){
-			score++;
-			cub1Active = false;
-			//enable Node Controllers
-			rc.addTarget(cub1);
-			if(!rc.isEnabled()) rc.toggle();
-			bc.addTarget(cub1);
-			if (!bc.isEnabled()) bc.toggle();
-			//take away prize texture
-			cub1.setTextureImage(prizeAttained);
-			// initialize child prize
-			child1 = initChildPrizes();
-			// set initial translation
-			
-			camLoc = cam.getLocation();
-			Matrix4f initialTranslation = (new Matrix4f()).translation(score -1f, 1f, 0.2f);
-			child1.setLocalTranslation(initialTranslation);
-			// set child as child of dolphin
-			child1.setParent(dol);
-			child1.propagateTranslation(true);
-			child1.propagateRotation(true);
-		}
-		else if (withinDistance(camLoc, cub2Loc, camPrizeProximity) && cub2Active){
-			score++;
-			cub2Active = false;
-			//enable Node Controllers
-			rc.addTarget(cub2);
-			if(!rc.isEnabled()) rc.toggle();
-			bc.addTarget(cub2);
-			if (!bc.isEnabled()) bc.toggle();
-			//take away prize texture
-			cub2.setTextureImage(prizeAttained);
-			// initialize child prize
-			child2 = initChildPrizes();
-			// set initial translation
-			camLoc = cam.getLocation();
-			Matrix4f initialTranslation = (new Matrix4f()).translation(score -1f,1f,0.2f);
-			child2.setLocalTranslation(initialTranslation);
-			// set child as child of dolphin
-			child2.setParent(dol);
-			child2.propagateTranslation(true);
-			child2.propagateRotation(true);
-		}
-		else if (withinDistance(camLoc, cub3Loc, camPrizeProximity) && cub3Active){
-			score++;
-			cub3Active = false;
-			//enable Node Controllers
-			rc.addTarget(cub3);
-			if(!rc.isEnabled()) rc.toggle();
-			bc.addTarget(cub3);
-			if (!bc.isEnabled()) bc.toggle();
-			//take away prize texture
-			cub3.setTextureImage(prizeAttained);
-			// initialize child prize
-			child3 = initChildPrizes();
-			// set initial translation
-			camLoc = cam.getLocation();
-			Matrix4f initialTranslation = (new Matrix4f()).translation(score -1f,1f,0.2f);
-			child3.setLocalTranslation(initialTranslation);
-			// set child as child of dolphin
-			child3.setParent(dol);
-			child3.propagateTranslation(true);
-			child3.propagateRotation(true);
-		}
-
+		
 	}
 
 	public void mountCam(){
@@ -466,37 +326,6 @@ public class MyGame extends VariableFrameRateGame
 		return true;
 	}
 
-	public void reCenterCamBelowMap(){
-		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
-		Vector3f camLoc = cam.getLocation();
-		if (camLoc.y() < 0){
-			Vector3f newLoc = new Vector3f(camLoc.x(),.5f, camLoc.z());
-			cam.setLocation(newLoc);
-		}
-	}
-
-	public void reCenterDolphBelowMap(){
-		Vector3f dolLoc = dol.getLocalLocation();
-		if (dolLoc.y() < 0){
-			Vector3f newLoc = new Vector3f(dolLoc.x(), 1f, dolLoc.z());
-			dol.setLocalLocation(newLoc);
-		}
-	}
-
-	public void spinGameObject(GameObject obj){
-		Matrix4f objRot = obj.getLocalRotation();
-		System.out.println("hitting this code");
-		Matrix4f rotMatrix = (new Matrix4f()).rotation(.01f,0,1,0);
-		objRot = objRot.mul(rotMatrix);
-		obj.setLocalRotation(objRot);
-	}
-
-	public GameObject initChildPrizes(){
-		GameObject obj = new GameObject(GameObject.root(), cubS, prize);
-		Matrix4f initialScale = (new Matrix4f()).scaling(0.05f);
-		obj.setLocalScale(initialScale);
-		return obj;
-	}
 
 	public void placeCamBehindAv(){
 		//get avatars position -val in the 
@@ -505,6 +334,18 @@ public class MyGame extends VariableFrameRateGame
 		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
 		cam.setLocation(newLoc);
 		cam.lookAt(dol);
+	}
+
+	public GhostManager getGhostManager(){
+		return this.gm;
+	}
+
+	public ObjShape getGhostShape(){
+		return this.ghostShape;
+	}
+
+	public TextureImage getGhostTexture(){
+		return this.ghostText;
 	}
 
 }

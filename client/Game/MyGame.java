@@ -53,6 +53,8 @@ public class MyGame extends VariableFrameRateGame
 	private ProtocolClient protClient;
 	private boolean isClientConnected = false;
 
+	private int sky;
+
 	public MyGame() { super(); }
 
 	public static void main(String[] args)
@@ -70,7 +72,10 @@ public class MyGame extends VariableFrameRateGame
 		linyS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,3f,0f));
 		linzS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,0f,-3f));
 		plane = new Plane();
+
 	}
+
+	
 
 	@Override
 	public void loadTextures()
@@ -139,6 +144,13 @@ public class MyGame extends VariableFrameRateGame
 	}
 
 	@Override
+	public void loadSkyBoxes(){
+		sky = (engine.getSceneGraph()).loadCubeMap("sky");
+		(engine.getSceneGraph()).setActiveSkyBoxTexture(sky);
+		(engine.getSceneGraph()).setSkyBoxEnabled(true);
+	}
+
+	@Override
 	public void initializeGame()
 	{	
 		isMounted = true;
@@ -202,7 +214,7 @@ public class MyGame extends VariableFrameRateGame
 		lastFrameTime = currFrameTime;
 		currFrameTime = System.currentTimeMillis();
 		if (!paused) elapsTime += (currFrameTime - lastFrameTime) / 1000.0;
-		orbitCam.updateCameraPosition();
+		mountCam();
 
 		// build and set HUD
 		int elapsTimeSec = Math.round((float)elapsTime);
@@ -287,7 +299,7 @@ public class MyGame extends VariableFrameRateGame
 		cam.setU(right);
 		cam.setV(up);
 		cam.setN(fwd);
-		cam.setLocation(loc.add(up.mul(1.3f)).add(fwd.mul(-2.5f)));
+		cam.setLocation(loc.add(up.mul(4f)).add(fwd.mul(-5f)));
 	}
 
 	public void dismountCam() {

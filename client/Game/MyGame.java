@@ -348,4 +348,12 @@ public class MyGame extends VariableFrameRateGame
 		return this.ghostText;
 	}
 
+	public Vector3f getPlayerPosition() { 
+		return dol.getWorldLocation(); 
+	}
+
+	public void setIsConnected(boolean connected){
+		this.isClientConnected = connected;
+	}
+
 }

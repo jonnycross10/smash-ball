@@ -27,9 +27,9 @@ public class MyGame extends VariableFrameRateGame
 	private int counter=0;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, child1, child2, child3;
-	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS;
-	private TextureImage ghostText, doltx, prize, grass, prizeAttained;
+	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr;
+	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS;
+	private TextureImage ghostText, doltx, prize, grass, heightMap;
 	private Light light1;
 
 	private int score;
@@ -72,6 +72,7 @@ public class MyGame extends VariableFrameRateGame
 		linyS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,3f,0f));
 		linzS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,0f,-3f));
 		plane = new Plane();
+		terrS = new TerrainPlane(1000);
 
 	}
 
@@ -82,7 +83,7 @@ public class MyGame extends VariableFrameRateGame
 	{	doltx = new TextureImage("steve.png");
 		prize = new TextureImage("prize.png");
 		grass = new TextureImage("grass-pattern.jpg");
-		prizeAttained = new TextureImage("silver-background.jpg");
+		heightMap = new TextureImage("terrMap2.jpg");
 	}
 
 	@Override
@@ -130,9 +131,14 @@ public class MyGame extends VariableFrameRateGame
 		cub3.setLocalTranslation(initialTranslation);
 		cub3.setLocalScale(initialScale);
 
-		planeObj = new GameObject(GameObject.root(), plane, grass);
-		initialScale = (new Matrix4f()).scaling(40f);
-		planeObj.setLocalScale(initialScale);
+		//planeObj = new GameObject(GameObject.root(), plane, grass);
+		//initialScale = (new Matrix4f()).scaling(40f);
+		//planeObj.setLocalScale(initialScale);
+
+		terr = new GameObject(GameObject.root(), terrS, grass);
+		Matrix4f terrScale = (new Matrix4f()).scaling(40f);
+		terr.setLocalScale(terrScale);
+		terr.setHeightMap(heightMap);
 	}
 
 	@Override

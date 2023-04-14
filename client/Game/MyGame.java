@@ -64,7 +64,7 @@ public class MyGame extends VariableFrameRateGame
 
 	@Override
 	public void loadShapes()
-	{	dolS = new ImportedModel("dolphinHighPoly.obj");
+	{	dolS = new ImportedModel("steve.obj");
 		cubS = new Cube();
 		linxS = new Line(new Vector3f(0f,0f,0f), new Vector3f(3f,0f,0f));
 		linyS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,3f,0f));
@@ -74,7 +74,7 @@ public class MyGame extends VariableFrameRateGame
 
 	@Override
 	public void loadTextures()
-	{	doltx = new TextureImage("Dolphin_HighPolyUV.png");
+	{	doltx = new TextureImage("steve.png");
 		prize = new TextureImage("prize.png");
 		grass = new TextureImage("grass-pattern.jpg");
 		prizeAttained = new TextureImage("silver-background.jpg");

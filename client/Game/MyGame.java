@@ -8,11 +8,23 @@ import tage.nodeControllers.RotationController;
 import tage.shapes.*;
 
 import java.lang.Math;
+import java.lang.Object;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
 import org.joml.*;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 
 import java.util.Random;
@@ -27,8 +39,8 @@ public class MyGame extends VariableFrameRateGame
 	private int counter=0;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr;
-	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS;
+	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, ball;
+	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS, ballS;
 	private TextureImage ghostText, doltx, prize, grass, heightMap;
 	private Light light1;
 
@@ -52,6 +64,7 @@ public class MyGame extends VariableFrameRateGame
 	private ProtocolType serverProtocol;
 	private ProtocolClient protClient;
 	private boolean isClientConnected = false;
+	private ArrayList<Float> ballStart = new ArrayList<>();
 
 	private int sky;
 
@@ -61,7 +74,62 @@ public class MyGame extends VariableFrameRateGame
 	{	MyGame game = new MyGame();
 		engine = new Engine(game);
 		game.initializeSystem();
+		game.initScript(game);
 		game.game_loop();
+	}
+
+	public void initScript(MyGame game){
+		ScriptEngineManager factory = new ScriptEngineManager();
+		String scriptFileName = "./Game/ballStart.js";
+		// get a list of the script engines on this platform
+		List<ScriptEngineFactory> list = factory.getEngineFactories();
+		System.out.println("Script Engine Factories found:");
+		for (ScriptEngineFactory f : list)
+		{ System.out.println(" Name = " + f.getEngineName()
+		+ " language = " + f.getLanguageName()
+		+ " extensions = " + f.getExtensions());
+		}
+		// get the JavaScript engine
+		ScriptEngine jsEngine = factory.getEngineByName("js");
+		// run the script
+		game.executeScript(jsEngine, scriptFileName);
+	}
+
+	private void executeScript(ScriptEngine engine, String scriptFileName){
+		try{ 
+			FileReader fileReader = new FileReader(scriptFileName);
+			engine.eval(fileReader); //execute the script statements in the file
+			Invocable invEngine = (Invocable) engine;
+			Object [] arg = {};
+			try{
+				Collection<Object> ballSt =  ((ScriptObjectMirror) invEngine.invokeFunction("getStart",arg)).values();
+				for (Object s : ballSt){
+					System.out.println("ball start is " + s);
+					ballStart.add(Float.valueOf(s.toString()));
+				}
+			}
+			catch (ScriptException ex){
+				System.out.println(scriptFileName + "method not able to execute "); 
+			}
+			catch(NoSuchMethodException ex){
+				System.out.println(scriptFileName + "method not able to execute "); 
+			}
+
+			fileReader.close();
+		}
+		catch (FileNotFoundException e1){ 
+			System.out.println(scriptFileName + " not found " + e1); 
+		}
+		catch (IOException e2){ 
+			System.out.println("IO problem with " + scriptFileName + e2); 
+		}
+		catch (ScriptException e3){ 
+			System.out.println("ScriptException in " + scriptFileName + e3); 
+		}
+		catch (NullPointerException e4){ 
+			System.out.println ("Null ptr exception in " + scriptFileName + e4); 
+		}
+		ball.setLocalLocation(new Vector3f(ballStart.get(0),ballStart.get(1), ballStart.get(2)));
 	}
 
 	@Override
@@ -73,6 +141,7 @@ public class MyGame extends VariableFrameRateGame
 		linzS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,0f,-3f));
 		plane = new Plane();
 		terrS = new TerrainPlane(1000);
+		ballS = new Sphere(10);
 
 	}
 
@@ -139,6 +208,8 @@ public class MyGame extends VariableFrameRateGame
 		Matrix4f terrScale = (new Matrix4f()).scaling(40f);
 		terr.setLocalScale(terrScale);
 		terr.setHeightMap(heightMap);
+
+		ball = new GameObject(GameObject.root(), ballS, prize);
 	}
 
 	@Override
@@ -212,11 +283,14 @@ public class MyGame extends VariableFrameRateGame
 		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
 		orbitCam = new CameraOrbit3D(cam,dol, gpName,engine);
 		//placeCamBehindAv();
+		
+
 	}
 
 	@Override
 	public void update()
 	{		
+		
 		lastFrameTime = currFrameTime;
 		currFrameTime = System.currentTimeMillis();
 		if (!paused) elapsTime += (currFrameTime - lastFrameTime) / 1000.0;
@@ -239,10 +313,6 @@ public class MyGame extends VariableFrameRateGame
 
 		int width = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getWidth()/37.68));
 		int height = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getHeight()/1.325));
-		System.out.println(engine.getRenderSystem().getGLCanvas().getWidth());
-		System.out.println(engine.getRenderSystem().getGLCanvas().getHeight());
-		System.out.println(width);
-		System.out.println(height);
 		(engine.getHUDmanager()).setHUD1(scoreDisplayStr, hud1Color, 600, 15); //TODO set to screen dimensions
 		(engine.getHUDmanager()).setHUD2(locationString, hud2Color, width, height);
 

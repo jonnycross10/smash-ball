@@ -205,7 +205,7 @@ public class MyGame extends VariableFrameRateGame
 		//planeObj.setLocalScale(initialScale);
 
 		terr = new GameObject(GameObject.root(), terrS, grass);
-		Matrix4f terrScale = (new Matrix4f()).scaling(40f);
+		Matrix4f terrScale = (new Matrix4f()).scaling(40f,10f,40f);
 		terr.setLocalScale(terrScale);
 		terr.setHeightMap(heightMap);
 
@@ -422,6 +422,10 @@ public class MyGame extends VariableFrameRateGame
 		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
 		cam.setLocation(newLoc);
 		cam.lookAt(dol);
+	}
+
+	public GameObject getTerrain(){
+		return terr;
 	}
 
 	public GhostManager getGhostManager(){

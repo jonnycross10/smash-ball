@@ -7,7 +7,7 @@ import org.joml.*;
 public class FwdAction extends AbstractInputAction
 { 
     private MyGame game;
-    private GameObject av;
+    private GameObject av, terr;
     private Vector3f oldPosition, newPosition;
     private Vector4f fwdDirection;
     private boolean isMounted;
@@ -45,6 +45,12 @@ public class FwdAction extends AbstractInputAction
             newPosition = oldPosition.add(fwdDirection.x(),
             fwdDirection.y(), fwdDirection.z());
             av.setLocalLocation(newPosition);
+
+            //adding terrain traversal update
+            Vector3f avLoc = av.getLocalLocation();
+            terr = game.getTerrain();
+            float newHeight = terr.getHeight(avLoc.x(),avLoc.z());
+            av.setLocalLocation(new Vector3f(avLoc.x(),newHeight, avLoc.z()));
         }        
         else{
             // update yaw value for keyboard input

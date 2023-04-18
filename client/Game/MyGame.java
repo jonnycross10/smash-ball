@@ -129,7 +129,13 @@ public class MyGame extends VariableFrameRateGame
 		catch (NullPointerException e4){ 
 			System.out.println ("Null ptr exception in " + scriptFileName + e4); 
 		}
-		ball.setLocalLocation(new Vector3f(ballStart.get(0),ballStart.get(1), ballStart.get(2)));
+		//if ball height is below terrain height put it above terrain
+		float ballX = ballStart.get(0);
+		float ballY = ballStart.get(1);
+		float ballZ = ballStart.get(2);
+
+		ball.setLocalLocation(new Vector3f(ballX, ballY, ballZ));
+		
 	}
 
 	@Override
@@ -205,7 +211,7 @@ public class MyGame extends VariableFrameRateGame
 		terr.setHeightMap(heightMap);
 
 		ball = new GameObject(GameObject.root(), ballS, prize);
-
+		
 		// build dolphin in the center of the window
 		dol = new GameObject(GameObject.root(), dolS, doltx);
 		initialTranslation = (new Matrix4f()).translation(0,0,0);
@@ -328,10 +334,19 @@ public class MyGame extends VariableFrameRateGame
 		// double score if finished in under a minute and a half
 		if(elapsTimeSec <90 && score == 3) score = score*2;
 
+		//update character location
 		Vector3f avLoc = dol.getLocalLocation();
 		float newHeight = terr.getHeight(avLoc.x(),avLoc.z());
 		dol.setLocalLocation(new Vector3f(avLoc.x(),newHeight, avLoc.z()));
 		
+		//update ball location if below terrain
+		float ballX = ball.getLocalLocation().x();
+		float ballY = ball.getLocalLocation().y();
+		float ballZ = ball.getLocalLocation().z();
+		float terrHeight = terr.getHeight(ballX, ballZ);
+		boolean ballBelow = (ballY - terrHeight) < 0;
+		float ballHeight = ballBelow ? ballY + (terrHeight-ballY): ballY ;
+		if (ballBelow) ball.setLocalLocation(new Vector3f(ballX, ballHeight, ballZ));
 	}
 
 	@Override

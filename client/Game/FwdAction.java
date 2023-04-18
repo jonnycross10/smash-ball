@@ -46,11 +46,6 @@ public class FwdAction extends AbstractInputAction
             fwdDirection.y(), fwdDirection.z());
             av.setLocalLocation(newPosition);
 
-            //adding terrain traversal update
-            Vector3f avLoc = av.getLocalLocation();
-            terr = game.getTerrain();
-            float newHeight = terr.getHeight(avLoc.x(),avLoc.z());
-            av.setLocalLocation(new Vector3f(avLoc.x(),newHeight, avLoc.z()));
         }        
         else{
             // update yaw value for keyboard input

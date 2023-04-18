@@ -169,12 +169,7 @@ public class MyGame extends VariableFrameRateGame
 		y.getRenderStates().setColor(new Vector3f(0f, 1f, 0f));
 		z.getRenderStates().setColor(new Vector3f(0f, 0f, 1f));
 
-		// build dolphin in the center of the window
-		dol = new GameObject(GameObject.root(), dolS, doltx);
-		initialTranslation = (new Matrix4f()).translation(0,0,0);
-		initialScale = (new Matrix4f()).scaling(3.0f);
-		dol.setLocalTranslation(initialTranslation);
-		dol.setLocalScale(initialScale);
+		
 
 		// build cubes
 		Random rand = new Random();
@@ -210,6 +205,15 @@ public class MyGame extends VariableFrameRateGame
 		terr.setHeightMap(heightMap);
 
 		ball = new GameObject(GameObject.root(), ballS, prize);
+
+		// build dolphin in the center of the window
+		dol = new GameObject(GameObject.root(), dolS, doltx);
+		initialTranslation = (new Matrix4f()).translation(0,0,0);
+		initialScale = (new Matrix4f()).scaling(3.0f);
+		dol.setLocalTranslation(initialTranslation);
+		dol.setLocalScale(initialScale);
+
+		
 	}
 
 	@Override
@@ -324,11 +328,9 @@ public class MyGame extends VariableFrameRateGame
 		// double score if finished in under a minute and a half
 		if(elapsTimeSec <90 && score == 3) score = score*2;
 
-		// check if cubes are active. May want to change to loop/map/arraylist something later
-		//TODO get rid of once Node controllers are finished
-		//if (!cub1Active) spinGameObject(cub1);
-		//if (!cub2Active) spinGameObject(cub2);
-		//if (!cub3Active) spinGameObject(cub3);
+		Vector3f avLoc = dol.getLocalLocation();
+		float newHeight = terr.getHeight(avLoc.x(),avLoc.z());
+		dol.setLocalLocation(new Vector3f(avLoc.x(),newHeight, avLoc.z()));
 		
 	}
 

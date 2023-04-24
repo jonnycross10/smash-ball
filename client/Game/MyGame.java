@@ -9,6 +9,9 @@ import tage.shapes.*;
 
 import java.lang.Math;
 import java.lang.Object;
+import java.net.UnknownHostException;
+import java.net.InetAddress;
+
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import java.awt.*;
 import java.awt.event.*;
@@ -68,10 +71,19 @@ public class MyGame extends VariableFrameRateGame
 
 	private int sky;
 
-	public MyGame() { super(); }
+	public MyGame(String serverAddress, int serverPort, String protocol) { 
+		super();
+		gm = new GhostManager(this);
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
+		if (protocol.toUpperCase().compareTo("TCP") == 0)
+			this.serverProtocol = ProtocolType.TCP;
+		else
+			this.serverProtocol = ProtocolType.UDP;
+	}
 
 	public static void main(String[] args)
-	{	MyGame game = new MyGame();
+	{	MyGame game = new MyGame(args[0], Integer.parseInt(args[1]), args[2]);
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.initScript(game);
@@ -294,7 +306,7 @@ public class MyGame extends VariableFrameRateGame
 		orbitCam = new CameraOrbit3D(cam,dol, gpName,engine);
 		//placeCamBehindAv();
 		
-
+		setupNetworking();
 	}
 
 	@Override
@@ -318,8 +330,6 @@ public class MyGame extends VariableFrameRateGame
 			
 		Vector3f hud1Color = new Vector3f(0,1,0);
 		Vector3f hud2Color = new Vector3f(1,0,0);
-
-		
 
 		int width = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getWidth()/37.68));
 		int height = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getHeight()/1.325));
@@ -347,6 +357,8 @@ public class MyGame extends VariableFrameRateGame
 		boolean ballBelow = (ballY - terrHeight) < 0;
 		float ballHeight = ballBelow ? ballY + (terrHeight-ballY): ballY ;
 		if (ballBelow) ball.setLocalLocation(new Vector3f(ballX, ballHeight, ballZ));
+
+		processNetworking((float) elapsTime);
 	}
 
 	@Override
@@ -463,6 +475,37 @@ public class MyGame extends VariableFrameRateGame
 
 	public void setIsConnected(boolean connected){
 		this.isClientConnected = connected;
+	}
+
+	private void setupNetworking()
+	{	isClientConnected = false;	
+		try {	
+			protClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+		} 	
+		catch (UnknownHostException e) {	
+			e.printStackTrace();
+		}	
+		catch (IOException e) {	
+			e.printStackTrace();
+		}
+		if (protClient == null){	
+			System.out.println("missing protocol host");
+		}
+		else{	
+			// Send the initial join message with a unique identifier for this client
+			System.out.println("sending join message to protocol host");
+			protClient.sendJoinMessage();
+		}
+	}
+
+	protected void processNetworking(float elapsTime)
+	{	// Process packets received by the client from the server
+		if (protClient != null)
+			protClient.processPackets();
+	}
+
+	public ProtocolClient getProtClient(){
+		return this.protClient;
 	}
 
 }

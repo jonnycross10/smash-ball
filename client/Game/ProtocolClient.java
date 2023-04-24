@@ -25,14 +25,17 @@ public class ProtocolClient extends GameConnectionClient
     @Override
     protected void processPacket(Object msg) { 
         String strMessage = (String) msg;
+        System.out.println("message received -->" + strMessage);
         String[] messageTokens = strMessage.split(",");
         if(messageTokens.length > 0) {
             if(messageTokens[0].compareTo("join") == 0) { // format: join, success or join, failure
                 if(messageTokens[1].compareTo("success") == 0) { 
+                    System.out.println("join success confirmed");
                     game.setIsConnected(true);
                     sendCreateMessage(game.getPlayerPosition());
                 }
                 if(messageTokens[1].compareTo("failure") == 0) { 
+                    System.out.println("join failure confirmed");
                     game.setIsConnected(false);
                 } 
             }
@@ -72,19 +75,55 @@ public class ProtocolClient extends GameConnectionClient
             e.printStackTrace();
         } 
     }
-    public void sendCreateMessage(Vector3f pos) { // format: (create, localId, x,y,z)
-        try { 
-            String message = new String("create," + id.toString());
-            message += "," + pos.x()+"," + pos.y() + "," + pos.z();
-            sendPacket(message);
-        }
-        catch (IOException e) { 
+
+    public void sendByeMessage() {	
+        try {	
+            sendPacket(new String("bye," + id.toString()));
+		} 
+        catch (IOException e) {	
             e.printStackTrace();
-        } 
-    
+	    }	
     }
+    
     //also need code for:
-    public void sendByeMessage() {}
-    public void sendDetailsForMessage(UUID remId, Vector3f pos) {}
-    public void sendMoveMessage(Vector3f pos) {}
+    public void sendCreateMessage(Vector3f position){	
+        try {	
+            String message = new String("create," + id.toString());
+			message += "," + position.x();
+			message += "," + position.y();
+			message += "," + position.z();
+			
+			sendPacket(message);
+        } 
+        catch (IOException e) {	
+            e.printStackTrace();
+	    }	
+    }
+    public void sendDetailsForMessage(UUID remoteId, Vector3f position) {	
+        try {	
+            String message = new String("dsfr," + remoteId.toString() + "," + id.toString());
+			message += "," + position.x();
+			message += "," + position.y();
+			message += "," + position.z();
+			
+			sendPacket(message);
+		} 
+        catch (IOException e) {	
+            e.printStackTrace();
+	    }	
+    }
+    public void sendMoveMessage(Vector3f position)
+	{	
+        try {	
+            String message = new String("move," + id.toString());
+			message += "," + position.x();
+			message += "," + position.y();
+			message += "," + position.z();
+			
+			sendPacket(message);
+		} 
+        catch (IOException e) {	
+            e.printStackTrace();
+	    } 
+    }
 }

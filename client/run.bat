@@ -1,1 +1,1 @@
-java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 Game.MyGame
+java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 Game.MyGame 127.0.0.1 6010 UDP

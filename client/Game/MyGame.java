@@ -44,7 +44,7 @@ public class MyGame extends VariableFrameRateGame
 
 	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, ball;
 	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS, ballS;
-	private TextureImage ghostText, doltx, prize, grass, heightMap;
+	private TextureImage doltx, prize, grass, heightMap;
 	private Light light1;
 
 	private int score;
@@ -160,6 +160,7 @@ public class MyGame extends VariableFrameRateGame
 		plane = new Plane();
 		terrS = new TerrainPlane(1000);
 		ballS = new Sphere(10);
+		ghostShape = new ImportedModel("steve.obj");
 
 	}
 
@@ -466,7 +467,7 @@ public class MyGame extends VariableFrameRateGame
 	}
 
 	public TextureImage getGhostTexture(){
-		return this.ghostText;
+		return this.doltx;
 	}
 
 	public Vector3f getPlayerPosition() { 

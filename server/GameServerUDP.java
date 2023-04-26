@@ -46,11 +46,18 @@ public class GameServerUDP extends GameConnectionServer<UUID>
             removeClient(clientID);
             }
             // case where server receives a DETAILS-FOR message
-            if(msgTokens[0].compareTo("dsfr") == 0)
-            {  }
+            if(msgTokens[0].compareTo("dsfr") == 0){
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				UUID remoteID = UUID.fromString(msgTokens[2]);
+				String[] pos = {msgTokens[3], msgTokens[4], msgTokens[5]};
+				sendDetailsForMessage(clientID, remoteID, pos);
+			}
             // case where server receives a MOVE message
-            if(msgTokens[0].compareTo("move") == 0)
-            { }
+            if(msgTokens[0].compareTo("move") == 0){ 
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
+				sendMoveMessages(clientID, pos);
+			}
         }
     } 
 
@@ -62,7 +69,9 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				message += "success";
 			else
 				message += "failure";
+			System.out.println(message);
 			sendPacket(message, clientID);
+			System.out.println("finished sending join message");
 		} 
 		catch (IOException e) 
 		{	e.printStackTrace();

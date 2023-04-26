@@ -59,10 +59,23 @@ public class ProtocolClient extends GameConnectionClient
                 } 
             }
             if(messageTokens[0].compareTo("wsds") == 0) {
-
+                // Send the local client's avatar's information
+				// Parse out the id into a UUID
+				UUID ghostID = UUID.fromString(messageTokens[1]);
+				sendDetailsForMessage(ghostID, game.getPlayerPosition());
             }
             if(messageTokens[0].compareTo("move") == 0) { 
-
+                // move a ghost avatar
+				// Parse out the id into a UUID
+				UUID ghostID = UUID.fromString(messageTokens[1]);
+				
+				// Parse out the position into a Vector3f
+				Vector3f ghostPosition = new Vector3f(
+					Float.parseFloat(messageTokens[2]),
+					Float.parseFloat(messageTokens[3]),
+					Float.parseFloat(messageTokens[4]));
+				
+				ghostManager.updateGhostAvatar(ghostID, ghostPosition);
             }
         } 
     }

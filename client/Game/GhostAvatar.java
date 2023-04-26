@@ -6,11 +6,11 @@ import tage.*;
 
 public class GhostAvatar extends GameObject { 
     private UUID id;
-    private Vector3f position;
     public GhostAvatar(UUID id, ObjShape s, TextureImage t, Vector3f p) { 
         super(GameObject.root(), s, t);
         this.id = id;
-        //setPosition(p);
+        setPosition(p);
+        System.out.println("hit this");
     }
 
     //TODO also need accessors and setters for id and position
@@ -23,10 +23,10 @@ public class GhostAvatar extends GameObject {
     }
 
     public Vector3f getPosition() {
-        return this.position;
+        return getWorldLocation();
     }
 
     public void setPosition(Vector3f position) {
-        this.position = position;
+        setLocalLocation(position);
     }
 }

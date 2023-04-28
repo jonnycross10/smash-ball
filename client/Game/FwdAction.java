@@ -10,7 +10,6 @@ public class FwdAction extends AbstractInputAction
     private GameObject av, terr;
     private Vector3f oldPosition, newPosition;
     private Vector4f fwdDirection;
-    private boolean isMounted;
 
     public FwdAction(MyGame g){ 
         game = g;
@@ -20,7 +19,6 @@ public class FwdAction extends AbstractInputAction
     public void performAction(float time, Event e)
     { 
         Engine engine = game.getEngine();
-        isMounted = game.getMounted();
         float keyValue = e.getValue();
         String inputName = e.getComponent().getName(); // W, S, Y Axis
         if (keyValue > -.2 && keyValue < .2) return; 

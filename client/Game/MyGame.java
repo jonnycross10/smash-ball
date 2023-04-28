@@ -39,7 +39,6 @@ public class MyGame extends VariableFrameRateGame
 	private static Engine engine;
 
 	private boolean paused=false;
-	private int counter=0;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
 	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, ball;
@@ -51,15 +50,10 @@ public class MyGame extends VariableFrameRateGame
 	private final float camDolMinProximity=10f;
 	private final float camPrizeProximity=3f;
 
-	private boolean cub1Active;
-	private boolean cub2Active;
-	private boolean cub3Active;
-
 	private Plane plane;
 
 	private NodeController rc,bc;
 
-	private CameraOrbit3D orbitCam;
 
 	private GhostManager gm;
 	private String serverAddress;
@@ -188,35 +182,6 @@ public class MyGame extends VariableFrameRateGame
 		y.getRenderStates().setColor(new Vector3f(0f, 1f, 0f));
 		z.getRenderStates().setColor(new Vector3f(0f, 0f, 1f));
 
-		
-
-		// build cubes
-		Random rand = new Random();
-		int rand1 = rand.nextInt(50)-25;
-		int rand2 = rand.nextInt(50)-25;
-		int rand3 = rand.nextInt(50)-25;
-
-		cub1 = new GameObject(GameObject.root(), cubS, prize);
-		initialTranslation = (new Matrix4f()).translation(rand1,.5f,rand3);
-		initialScale = (new Matrix4f()).scaling(0.5f);
-		cub1.setLocalTranslation(initialTranslation);
-		cub1.setLocalScale(initialScale);
-
-		cub2 = new GameObject(GameObject.root(), cubS, prize);
-		initialTranslation = (new Matrix4f()).translation(rand3,.5f,rand2);
-		initialScale = (new Matrix4f()).scaling(0.5f);
-		cub2.setLocalTranslation(initialTranslation);
-		cub2.setLocalScale(initialScale);
-
-		cub3 = new GameObject(GameObject.root(), cubS, prize);
-		initialTranslation = (new Matrix4f()).translation(rand2,.5f,rand1);
-		initialScale = (new Matrix4f()).scaling(0.5f);
-		cub3.setLocalTranslation(initialTranslation);
-		cub3.setLocalScale(initialScale);
-
-		//planeObj = new GameObject(GameObject.root(), plane, grass);
-		//initialScale = (new Matrix4f()).scaling(40f);
-		//planeObj.setLocalScale(initialScale);
 
 		terr = new GameObject(GameObject.root(), terrS, grass);
 		Matrix4f terrScale = (new Matrix4f()).scaling(40f,10f,40f);
@@ -255,9 +220,6 @@ public class MyGame extends VariableFrameRateGame
 	{	
 		isMounted = true;
 		score = 0;
-		cub1Active = true;
-		cub2Active = true;
-		cub3Active = true;
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
 		elapsTime = 0.0;
@@ -297,16 +259,7 @@ public class MyGame extends VariableFrameRateGame
 		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.Y, fwdAction,
 		InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 		
-		//im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._0, ride,
-		//InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
-
-		// create the orbit view
-		String gpName = im.getFirstGamepadName();
-		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
-		orbitCam = new CameraOrbit3D(cam,dol, gpName,engine);
-		//placeCamBehindAv();
-		
 		setupNetworking();
 	}
 
@@ -334,12 +287,11 @@ public class MyGame extends VariableFrameRateGame
 
 		int width = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getWidth()/37.68));
 		int height = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getHeight()/1.325));
-		(engine.getHUDmanager()).setHUD1(scoreDisplayStr, hud1Color, 600, 15); //TODO set to screen dimensions
+		(engine.getHUDmanager()).setHUD1(scoreDisplayStr, hud1Color, 600, 15); 
 		(engine.getHUDmanager()).setHUD2(locationString, hud2Color, width, height);
 
 		// update input manager
 		im.update((float) elapsTime);// can prob take out
-		//TODO organize checks in a better way
 		updateScore();
 
 		// double score if finished in under a minute and a half
@@ -365,28 +317,12 @@ public class MyGame extends VariableFrameRateGame
 	@Override
 	public void createViewports(){
 		(engine.getRenderSystem()).addViewport("MAIN",0,0,1,1);
-		
-		// Create the smaller viewPort
-		(engine.getRenderSystem()).addViewport("BR",0f, .75f, .25f,.25f);
 		// ------------- positioning the main camera -------------
 		(engine.getRenderSystem().getViewport("MAIN").getCamera()).setLocation(new Vector3f(0,0,5));
-
-		Viewport smallVP = engine.getRenderSystem().getViewport("BR");
-		
-		Camera smallCam = smallVP.getCamera();
-		smallCam.setLocation(new Vector3f(0,8,0));
-		// Set U V N All have to be orthogonal
-		smallCam.setU(new Vector3f(0,0,-1));
-		smallCam.setV(new Vector3f(-1,0,0));
-		smallCam.setN(new Vector3f(0,-1,0));
 	}
 
 
 	public GameObject getAvatar() { return dol; }
-
-	public boolean getMounted() { return isMounted; }
-
-	public void setMounted(boolean mountStatus) {isMounted = mountStatus;}
 
 	public Engine getEngine() { return engine; }
 
@@ -408,20 +344,6 @@ public class MyGame extends VariableFrameRateGame
 		cam.setLocation(loc.add(up.mul(4f)).add(fwd.mul(-5f)));
 	}
 
-	public void dismountCam() {
-		System.out.println("dismounted");
-		Vector3f loc, fwd, up, right;
-		Camera cam;
-		cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
-		loc = dol.getWorldLocation(); //TODO one of these may help with rolling
-		fwd = dol.getWorldForwardVector();
-		up = dol.getWorldUpVector();
-		right = dol.getWorldRightVector();
-		cam.setU(right);
-		cam.setV(up);
-		cam.setN(fwd);
-		cam.setLocation(loc.add(right.mul(-1f)).add(up.mul(.3f)));
-	}
 
 	public float checkProximity(float x1, float x2){
 		return Math.abs(x2-x1); 

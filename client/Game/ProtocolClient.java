@@ -77,6 +77,24 @@ public class ProtocolClient extends GameConnectionClient
 				
 				ghostManager.updateGhostAvatar(ghostID, ghostPosition);
             }
+            if(messageTokens[0].compareTo("createBall") == 0) { 
+                Vector3f ballPosition = new Vector3f(
+					Float.parseFloat(messageTokens[2]), //X
+					Float.parseFloat(messageTokens[3]), //Y
+					Float.parseFloat(messageTokens[4]));//Z
+                    game.createBall(ballPosition);
+            }
+            if(messageTokens[0].compareTo("getBall") == 0) { 
+                Vector3f ballLoc = game.getBallLoc();
+                sendBallLoc(ballLoc);
+            }
+            if(messageTokens[0].compareTo("crUpdateBall") == 0) { 
+                Vector3f ballPosition = new Vector3f(
+					Float.parseFloat(messageTokens[2]), //X
+					Float.parseFloat(messageTokens[3]), //Y
+					Float.parseFloat(messageTokens[4]));//Z
+                    game.createBall(ballPosition);
+            }
         } 
     }
 
@@ -138,5 +156,18 @@ public class ProtocolClient extends GameConnectionClient
         catch (IOException e) {	
             e.printStackTrace();
 	    } 
+    }
+    public void sendBallLoc(Vector3f position) {	
+        try {	
+            String message = new String("ballLoc," + id.toString());
+			message += "," + position.x();
+			message += "," + position.y();
+			message += "," + position.z();
+			
+			sendPacket(message);
+		} 
+        catch (IOException e) {	
+            e.printStackTrace();
+	    }	
     }
 }

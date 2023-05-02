@@ -1,12 +1,33 @@
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
+import org.joml.Vector3f;
 
 import tage.networking.server.GameConnectionServer;
 import tage.networking.server.IClientInfo;
-public class GameServerUDP extends GameConnectionServer<UUID>
+public class GameServerUDP<K> extends GameConnectionServer<UUID>
 {
+	private ArrayList<Float> ballStart = new ArrayList<>();
+	float ballX;
+	float ballY;
+	float ballZ;
+	UUID firstClient;
+	
     public GameServerUDP(int localPort) throws IOException{ 
         super(localPort, ProtocolType.UDP); 
     }
@@ -25,6 +46,7 @@ public class GameServerUDP extends GameConnectionServer<UUID>
                     UUID clientID = UUID.fromString(msgTokens[1]);
                     addClient(ci, clientID);
                     sendJoinedMessage(clientID, true);
+					handleBalls(clientID);
                 }
                 catch (IOException e){ 
                     e.printStackTrace();
@@ -57,6 +79,13 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 				UUID clientID = UUID.fromString(msgTokens[1]);
 				String[] pos = {msgTokens[2], msgTokens[3], msgTokens[4]};
 				sendMoveMessages(clientID, pos);
+			}
+			if(msgTokens[0].compareTo("ballLoc") == 0){ 
+				ArrayList<Float> ballPosition = new ArrayList<Float>();
+				ballPosition.add(Float.parseFloat(msgTokens[2])); //X
+				ballPosition.add(Float.parseFloat(msgTokens[3])); //Y
+				ballPosition.add(Float.parseFloat(msgTokens[4])); //Z
+				crUpdateBall(ballPosition);
 			}
         }
     } 
@@ -158,4 +187,112 @@ public class GameServerUDP extends GameConnectionServer<UUID>
 		catch (IOException e) 
 		{	e.printStackTrace();
 	}	}
+
+	public ArrayList<Float> initScript() {
+		ScriptEngineManager factory = new ScriptEngineManager();
+		String scriptFileName = "./ballStart.js";
+		// get a list of the script engines on this platform
+		List<ScriptEngineFactory> list = factory.getEngineFactories();
+		System.out.println("Script Engine Factories found:");
+		for (ScriptEngineFactory f : list)
+		{ 
+			System.out.println(
+			" Name = " + f.getEngineName()
+			+ " language = " + f.getLanguageName()
+			+ " extensions = " + f.getExtensions());
+		}
+		// get the JavaScript engine
+		ScriptEngine jsEngine = factory.getEngineByName("js");
+		// run the script
+		return(executeScript(jsEngine, scriptFileName));
+	}
+
+	private ArrayList<Float> executeScript(ScriptEngine engine, String scriptFileName){
+		try{ 
+			FileReader fileReader = new FileReader(scriptFileName);
+			engine.eval(fileReader); //execute the script statements in the file
+			Invocable invEngine = (Invocable) engine;
+			Object [] arg = {};
+			try{
+				Collection<Object> ballSt =  ((ScriptObjectMirror) invEngine.invokeFunction("getStart",arg)).values();
+				for (Object s : ballSt){
+					System.out.println("ball start is " + s);
+					ballStart.add(Float.valueOf(s.toString()));
+				}
+			}
+			catch (ScriptException ex){
+				System.out.println(scriptFileName + "method not able to execute "); 
+			}
+			catch(NoSuchMethodException ex){
+				System.out.println(scriptFileName + "method not able to execute "); 
+			}
+
+			fileReader.close();
+		}
+		catch (FileNotFoundException e1){ 
+			System.out.println(scriptFileName + " not found " + e1); 
+		}
+		catch (IOException e2){ 
+			System.out.println("IO problem with " + scriptFileName + e2); 
+		}
+		catch (ScriptException e3){ 
+			System.out.println("ScriptException in " + scriptFileName + e3); 
+		}
+		catch (NullPointerException e4){ 
+			System.out.println ("Null ptr exception in " + scriptFileName + e4); 
+		}
+		//if ball height is below terrain height put it above terrain
+		ballX = ballStart.get(0);
+		ballY = ballStart.get(1);
+		ballZ = ballStart.get(2);
+
+		//Send x y and z to client so they can update their balls 
+		return ballStart;
+	}
+
+	public void handleBalls(UUID clientID){
+		ConcurrentHashMap<UUID, IClientInfo> clients = getClients();
+		Collection<IClientInfo> clientVals = clients.values();
+		List<IClientInfo> list = new ArrayList<IClientInfo>(clientVals);
+		//TODO might want to send another message for updating health here
+
+		//if it's the first client joining, then run the script to create the ball
+		if(list.size()==1){
+			firstClient = clientID;
+			ArrayList<Float> ballInitValue = initScript();
+			String message = new String("createBall," + clientID.toString());
+			message += "," + ballInitValue.get(0); //X
+			message += "," + ballInitValue.get(1); //Y
+			message += "," + ballInitValue.get(2); //Z
+			try{
+				sendPacketToAll(message);
+			}
+			catch(IOException i){
+				System.out.println("no balls");
+			}
+		}
+		else if(list.size()>1){
+			//ask client 1 for ball details
+			String message = new String("getBall," + clientID.toString());
+			try {
+				sendPacket(message, firstClient);
+			}
+			catch(IOException i){
+				System.out.println("unable to request balls from client");
+			}
+		}
+	}
+
+	public void crUpdateBall(ArrayList<Float> ballLoc){
+		String message = new String("crUpdateBall," + firstClient.toString());
+		message += "," + ballX;
+		message += "," + ballY;
+		message += "," + ballZ;
+		try{
+			forwardPacketToAll(message,firstClient);
+		}
+		catch(IOException i){
+			System.out.println("no ball updates");
+		}
+	}
 }

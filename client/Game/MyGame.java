@@ -41,7 +41,7 @@ public class MyGame extends VariableFrameRateGame
 	private boolean paused=false;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, ball;
+	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, gameBall;
 	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS, ballS;
 	private TextureImage doltx, prize, grass, heightMap;
 	private Light light1;
@@ -80,69 +80,10 @@ public class MyGame extends VariableFrameRateGame
 	{	MyGame game = new MyGame(args[0], Integer.parseInt(args[1]), args[2]);
 		engine = new Engine(game);
 		game.initializeSystem();
-		game.initScript(game);
 		game.game_loop();
 	}
 
-	public void initScript(MyGame game){
-		ScriptEngineManager factory = new ScriptEngineManager();
-		String scriptFileName = "./Game/ballStart.js";
-		// get a list of the script engines on this platform
-		List<ScriptEngineFactory> list = factory.getEngineFactories();
-		System.out.println("Script Engine Factories found:");
-		for (ScriptEngineFactory f : list)
-		{ System.out.println(" Name = " + f.getEngineName()
-		+ " language = " + f.getLanguageName()
-		+ " extensions = " + f.getExtensions());
-		}
-		// get the JavaScript engine
-		ScriptEngine jsEngine = factory.getEngineByName("js");
-		// run the script
-		game.executeScript(jsEngine, scriptFileName);
-	}
 
-	private void executeScript(ScriptEngine engine, String scriptFileName){
-		try{ 
-			FileReader fileReader = new FileReader(scriptFileName);
-			engine.eval(fileReader); //execute the script statements in the file
-			Invocable invEngine = (Invocable) engine;
-			Object [] arg = {};
-			try{
-				Collection<Object> ballSt =  ((ScriptObjectMirror) invEngine.invokeFunction("getStart",arg)).values();
-				for (Object s : ballSt){
-					System.out.println("ball start is " + s);
-					ballStart.add(Float.valueOf(s.toString()));
-				}
-			}
-			catch (ScriptException ex){
-				System.out.println(scriptFileName + "method not able to execute "); 
-			}
-			catch(NoSuchMethodException ex){
-				System.out.println(scriptFileName + "method not able to execute "); 
-			}
-
-			fileReader.close();
-		}
-		catch (FileNotFoundException e1){ 
-			System.out.println(scriptFileName + " not found " + e1); 
-		}
-		catch (IOException e2){ 
-			System.out.println("IO problem with " + scriptFileName + e2); 
-		}
-		catch (ScriptException e3){ 
-			System.out.println("ScriptException in " + scriptFileName + e3); 
-		}
-		catch (NullPointerException e4){ 
-			System.out.println ("Null ptr exception in " + scriptFileName + e4); 
-		}
-		//if ball height is below terrain height put it above terrain
-		float ballX = ballStart.get(0);
-		float ballY = ballStart.get(1);
-		float ballZ = ballStart.get(2);
-
-		ball.setLocalLocation(new Vector3f(ballX, ballY, ballZ));
-		
-	}
 
 	@Override
 	public void loadShapes()
@@ -187,8 +128,6 @@ public class MyGame extends VariableFrameRateGame
 		Matrix4f terrScale = (new Matrix4f()).scaling(40f,10f,40f);
 		terr.setLocalScale(terrScale);
 		terr.setHeightMap(heightMap);
-
-		ball = new GameObject(GameObject.root(), ballS, prize);
 		
 		// build dolphin in the center of the window
 		dol = new GameObject(GameObject.root(), dolS, doltx);
@@ -303,13 +242,15 @@ public class MyGame extends VariableFrameRateGame
 		dol.setLocalLocation(new Vector3f(avLoc.x(),newHeight, avLoc.z()));
 		
 		//update ball location if below terrain
-		float ballX = ball.getLocalLocation().x();
-		float ballY = ball.getLocalLocation().y();
-		float ballZ = ball.getLocalLocation().z();
-		float terrHeight = terr.getHeight(ballX, ballZ);
-		boolean ballBelow = (ballY - terrHeight) < 0;
-		float ballHeight = ballBelow ? ballY + (terrHeight-ballY): ballY ;
-		if (ballBelow) ball.setLocalLocation(new Vector3f(ballX, ballHeight, ballZ));
+		if (gameBall != null){
+			float ballX = gameBall.getLocalLocation().x();
+			float ballY = gameBall.getLocalLocation().y();
+			float ballZ = gameBall.getLocalLocation().z();
+			float terrHeight = terr.getHeight(ballX, ballZ);
+			boolean ballBelow = (ballY - terrHeight) < 0;
+			float ballHeight = ballBelow ? ballY + (terrHeight-ballY): ballY ;
+			if (ballBelow) gameBall.setLocalLocation(new Vector3f(ballX, ballHeight, ballZ));
+		}
 
 		processNetworking((float) elapsTime);
 	}
@@ -429,6 +370,19 @@ public class MyGame extends VariableFrameRateGame
 
 	public ProtocolClient getProtClient(){
 		return this.protClient;
+	}
+
+	public void createBall(Vector3f ballPosition){
+		gameBall = new GameObject(GameObject.root(), ballS, prize);
+		gameBall.setLocalLocation(ballPosition);
+	}
+
+	public Vector3f getBallLoc(){
+		return gameBall.getLocalLocation();
+	}
+
+	public void setBallLoc(Vector3f loc){
+		gameBall.setLocalLocation(loc);
 	}
 
 }

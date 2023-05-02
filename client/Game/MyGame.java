@@ -12,37 +12,22 @@ import java.lang.Object;
 import java.net.UnknownHostException;
 import java.net.InetAddress;
 
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import java.awt.*;
-import java.awt.event.*;
+
 import java.io.*;
-import javax.swing.*;
 import org.joml.*;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-
-import java.util.Random;
 
 public class MyGame extends VariableFrameRateGame
 {
-	private boolean isMounted;
 	private InputManager im;
 	private static Engine engine;
 
 	private boolean paused=false;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, cub1, cub2, cub3, x, y, z, planeObj, terr, gameBall;
-	private ObjShape ghostShape, dolS, cubS, linxS, linyS, linzS, terrS, ballS;
+	private GameObject dol, x, y, z, terr, gameBall;
+	private ObjShape ghostShape, dolS, linxS, linyS, linzS, terrS, ballS;
 	private TextureImage doltx, prize, grass, heightMap;
 	private Light light1;
 
@@ -61,7 +46,6 @@ public class MyGame extends VariableFrameRateGame
 	private ProtocolType serverProtocol;
 	private ProtocolClient protClient;
 	private boolean isClientConnected = false;
-	private ArrayList<Float> ballStart = new ArrayList<>();
 
 	private int sky;
 
@@ -83,12 +67,9 @@ public class MyGame extends VariableFrameRateGame
 		game.game_loop();
 	}
 
-
-
 	@Override
 	public void loadShapes()
 	{	dolS = new ImportedModel("steve.obj");
-		cubS = new Cube();
 		linxS = new Line(new Vector3f(0f,0f,0f), new Vector3f(3f,0f,0f));
 		linyS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,3f,0f));
 		linzS = new Line(new Vector3f(0f,0f,0f), new Vector3f(0f,0f,-3f));
@@ -157,7 +138,6 @@ public class MyGame extends VariableFrameRateGame
 	@Override
 	public void initializeGame()
 	{	
-		isMounted = true;
 		score = 0;
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
@@ -172,7 +152,7 @@ public class MyGame extends VariableFrameRateGame
 		(engine.getSceneGraph()).addNodeController(bc);
 		(engine.getRenderSystem()).setWindowDimensions(1900,1000);
 
-		isMounted = true;
+
 
 		//INPUT SECTION
 		im = engine.getInputManager();

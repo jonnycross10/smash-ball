@@ -7,8 +7,7 @@ function getStart()
     return arr;
 }
 
-function getRand(min, max)
-{
+function getRand(min, max){
     var randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
-    return(10);
+    return(randomNumber);
 }

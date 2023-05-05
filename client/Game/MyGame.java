@@ -1,6 +1,12 @@
 package Game;
 
 import tage.*;
+import tage.audio.AudioManagerFactory;
+import tage.audio.AudioResource;
+import tage.audio.AudioResourceType;
+import tage.audio.IAudioManager;
+import tage.audio.Sound;
+import tage.audio.SoundType;
 import tage.input.InputManager;
 import tage.networking.IGameConnection.ProtocolType;
 import tage.nodeControllers.BounceController;
@@ -49,6 +55,9 @@ public class MyGame extends VariableFrameRateGame
 
 	private int sky;
 
+	private IAudioManager audioMgr;
+	private Sound ballSound;
+
 	public MyGame(String serverAddress, int serverPort, String protocol) { 
 		super();
 		gm = new GhostManager(this);
@@ -79,9 +88,7 @@ public class MyGame extends VariableFrameRateGame
 		ghostShape = new ImportedModel("steve.obj");
 
 	}
-
 	
-
 	@Override
 	public void loadTextures()
 	{	doltx = new TextureImage("steve.png");
@@ -180,6 +187,7 @@ public class MyGame extends VariableFrameRateGame
 		
 
 		setupNetworking();
+		initAudio();
 	}
 
 	@Override
@@ -230,6 +238,17 @@ public class MyGame extends VariableFrameRateGame
 			boolean ballBelow = (ballY - terrHeight) < 0;
 			float ballHeight = ballBelow ? ballY + (terrHeight-ballY): ballY ;
 			if (ballBelow) gameBall.setLocalLocation(new Vector3f(ballX, ballHeight, ballZ));
+			ballSound.setLocation(gameBall.getWorldLocation());
+			setEarParameters();
+
+			 float distance = distance(dol.getLocalLocation(), gameBall.getLocalLocation());
+		 
+			 // Adjust volume of ballSound based on distance
+			 float maxVolume = 100.0f;
+			 float minVolume = 0.0f;
+			 float volume = maxVolume / (distance * distance);
+			 volume = Math.max(minVolume, Math.min(maxVolume, volume));
+			 ballSound.setVolume((int)volume);
 		}
 
 		processNetworking((float) elapsTime);
@@ -363,6 +382,45 @@ public class MyGame extends VariableFrameRateGame
 
 	public void setBallLoc(Vector3f loc){
 		gameBall.setLocalLocation(loc);
+	}
+
+	public void initAudio(){
+		AudioResource resource1;
+		audioMgr = AudioManagerFactory.createAudioManager(
+		"tage.audio.joal.JOALAudioManager");
+		if (!audioMgr.initialize()){ 
+			System.out.println("Audio Manager failed to initialize!");
+			return;
+		}
+		resource1 = audioMgr.createAudioResource(
+		"assets/sounds/mixkit-choir-magic-shine-658.wav", AudioResourceType.AUDIO_SAMPLE);
+		ballSound = new Sound(resource1, SoundType.SOUND_EFFECT, 10, true);
+		ballSound.initialize(audioMgr);
+		ballSound.setMaxDistance(10f);
+		ballSound.setMinDistance(.05f);
+		ballSound.setRollOff(5f);
+		if (gameBall != null){
+			ballSound.setLocation(getBallLoc());
+		}
+		else{
+			ballSound.setLocation(new Vector3f(40, 40, 40));
+		}
+		setEarParameters();
+		ballSound.play();
+	}
+
+	public void setEarParameters(){
+		Camera camera = (engine.getRenderSystem()).getViewport("MAIN").getCamera();
+		audioMgr.getEar().setLocation(dol.getWorldLocation());
+		audioMgr.getEar().setOrientation(camera.getN(), new Vector3f(0f,1f,0f));
+
+	}
+
+	public float distance(Vector3f a, Vector3f b) {
+		float dx = a.x - b.x;
+		float dy = a.y - b.y;
+		float dz = a.z - b.z;
+		return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
 	}
 
 }

@@ -17,6 +17,7 @@ import java.lang.Math;
 import java.lang.Object;
 import java.net.UnknownHostException;
 import java.net.InetAddress;
+import java.awt.event.KeyEvent;
 
 
 import java.io.*;
@@ -32,9 +33,10 @@ public class MyGame extends VariableFrameRateGame
 	private boolean paused=false;
 	private double lastFrameTime, currFrameTime, elapsTime;
 
-	private GameObject dol, x, y, z, terr, gameBall;
-	private ObjShape ghostShape, dolS, linxS, linyS, linzS, terrS, ballS;
-	private TextureImage doltx, prize, grass, heightMap;
+	private GameObject dol, x, y, z, terr, gameBall, kirby;
+	//private AnimatedShape kirbyS;
+	private ObjShape ghostShape, dolS, linxS, linyS, linzS, terrS, ballS, kirbyS;
+	private TextureImage doltx, prize, grass, heightMap, kirbText;
 	private Light light1;
 
 	private int score;
@@ -86,7 +88,7 @@ public class MyGame extends VariableFrameRateGame
 		terrS = new TerrainPlane(1000);
 		ballS = new Sphere(10);
 		ghostShape = new ImportedModel("steve.obj");
-
+		kirbyS = new ImportedModel("kirby.obj");
 	}
 	
 	@Override
@@ -95,6 +97,7 @@ public class MyGame extends VariableFrameRateGame
 		prize = new TextureImage("prize.png");
 		grass = new TextureImage("grass-pattern.jpg");
 		heightMap = new TextureImage("terrMap2.jpg");
+		kirbText = new TextureImage("kirby.png");
 	}
 
 	@Override
@@ -124,7 +127,9 @@ public class MyGame extends VariableFrameRateGame
 		dol.setLocalTranslation(initialTranslation);
 		dol.setLocalScale(initialScale);
 
-		
+		kirby = new GameObject(GameObject.root(), kirbyS, kirbText);
+		initialTranslation = (new Matrix4f()).translation(5,3,5);
+		kirby.setLocalTranslation(initialTranslation);
 	}
 
 	@Override

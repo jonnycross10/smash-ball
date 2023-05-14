@@ -15,6 +15,7 @@ public class ProtocolClient extends GameConnectionClient
     private MyGame game;
     private UUID id;
     private GhostManager ghostManager;
+    private int ballHealth;
     public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType pType, MyGame game) throws IOException { 
         super(remAddr, remPort, pType);
         this.game = game;
@@ -82,7 +83,9 @@ public class ProtocolClient extends GameConnectionClient
 					Float.parseFloat(messageTokens[2]), //X
 					Float.parseFloat(messageTokens[3]), //Y
 					Float.parseFloat(messageTokens[4]));//Z
+                    ballHealth = Integer.parseInt(messageTokens[5]);
                     game.createBall(ballPosition);
+                    game.updateBallHealth(ballHealth);
             }
             if(messageTokens[0].compareTo("getBall") == 0) { 
                 Vector3f ballLoc = game.getBallLoc();
@@ -93,7 +96,13 @@ public class ProtocolClient extends GameConnectionClient
 					Float.parseFloat(messageTokens[2]), //X
 					Float.parseFloat(messageTokens[3]), //Y
 					Float.parseFloat(messageTokens[4]));//Z
+                    ballHealth = Integer.parseInt(messageTokens[5]);
                     game.createBall(ballPosition);
+                    game.updateBallHealth(ballHealth);
+            }
+            if(messageTokens[0].compareTo("ballHealth") == 0) { 
+                ballHealth = Integer.parseInt(messageTokens[2]);
+                game.updateBallHealth(ballHealth);
             }
         } 
     }
@@ -169,5 +178,16 @@ public class ProtocolClient extends GameConnectionClient
         catch (IOException e) {	
             e.printStackTrace();
 	    }	
+    }
+
+    public void sendBallHealth(){
+        try{
+            String message = new String("ballHealth," + id.toString());
+            message += "," + game.getBallHealth();
+            sendPacket(message);
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
     }
 }

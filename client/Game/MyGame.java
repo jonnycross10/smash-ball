@@ -22,6 +22,7 @@ import java.awt.event.KeyEvent;
 
 import java.io.*;
 import org.joml.*;
+import java.awt.event.*;
 
 import java.util.ArrayList;
 
@@ -59,6 +60,7 @@ public class MyGame extends VariableFrameRateGame
 
 	private IAudioManager audioMgr;
 	private Sound ballSound;
+	private int ballHealth;
 
 	public MyGame(String serverAddress, int serverPort, String protocol) { 
 		super();
@@ -196,6 +198,18 @@ public class MyGame extends VariableFrameRateGame
 	}
 
 	@Override
+	public void mousePressed(MouseEvent e){
+		float ballProximity = distance(getPlayerPosition(), getBallLoc());
+		if(ballProximity<5.0){
+			if(gameBall!=null){
+				ballHealth--;
+				System.out.println("ball health is: " + ballHealth);
+				protClient.sendBallHealth();
+			}
+		}
+	}
+
+	@Override
 	public void update()
 	{		
 		
@@ -206,21 +220,15 @@ public class MyGame extends VariableFrameRateGame
 
 		// build and set HUD
 		int elapsTimeSec = Math.round((float)elapsTime);
-		String scoreDisplayStr = "Score: " + Integer.toString(score);
+		String scoreDisplayStr = "Ball Health: " + Integer.toString(ballHealth);
 		
 		Vector3f dolWorldPosition = dol.getWorldLocation();
-		String locationString = 
-			"X: " + String.valueOf(dolWorldPosition.x()) +
-			"Y: " + String.valueOf(dolWorldPosition.y()) +
-			"Z: " + String.valueOf(dolWorldPosition.z());
+		
 			
 		Vector3f hud1Color = new Vector3f(0,1,0);
-		Vector3f hud2Color = new Vector3f(1,0,0);
-
-		int width = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getWidth()/37.68));
-		int height = (int) Math.ceil((engine.getRenderSystem().getGLCanvas().getHeight()/1.325));
+		
 		(engine.getHUDmanager()).setHUD1(scoreDisplayStr, hud1Color, 600, 15); 
-		(engine.getHUDmanager()).setHUD2(locationString, hud2Color, width, height);
+		
 
 		// update input manager
 		im.update((float) elapsTime);// can prob take out
@@ -426,6 +434,15 @@ public class MyGame extends VariableFrameRateGame
 		float dy = a.y - b.y;
 		float dz = a.z - b.z;
 		return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+	}
+
+	public void updateBallHealth(int ballHealth){
+		System.out.println("updating ball health to: "+ ballHealth);
+		this.ballHealth = ballHealth;
+	}
+
+	public int getBallHealth(){
+		return ballHealth;
 	}
 
 }

@@ -27,6 +27,7 @@ public class GameServerUDP<K> extends GameConnectionServer<UUID>
 	float ballY;
 	float ballZ;
 	UUID firstClient;
+	private int ballHealth;
 	
     public GameServerUDP(int localPort) throws IOException{ 
         super(localPort, ProtocolType.UDP); 
@@ -86,6 +87,11 @@ public class GameServerUDP<K> extends GameConnectionServer<UUID>
 				ballPosition.add(Float.parseFloat(msgTokens[3])); //Y
 				ballPosition.add(Float.parseFloat(msgTokens[4])); //Z
 				crUpdateBall(ballPosition);
+			}
+			if(msgTokens[0].compareTo("ballHealth") == 0){ 
+				UUID clientID = UUID.fromString(msgTokens[1]);
+				ballHealth = Integer.parseInt(msgTokens[2]);
+				updateHealth(ballHealth, clientID);
 			}
         }
     } 
@@ -245,7 +251,7 @@ public class GameServerUDP<K> extends GameConnectionServer<UUID>
 		ballX = ballStart.get(0);
 		ballY = ballStart.get(1);
 		ballZ = ballStart.get(2);
-
+		ballHealth =10;
 		//Send x y and z to client so they can update their balls 
 		return ballStart;
 	}
@@ -264,6 +270,7 @@ public class GameServerUDP<K> extends GameConnectionServer<UUID>
 			message += "," + ballInitValue.get(0); //X
 			message += "," + ballInitValue.get(1); //Y
 			message += "," + ballInitValue.get(2); //Z
+			message += "," +  ballHealth;
 			try{
 				sendPacketToAll(message);
 			}
@@ -288,11 +295,24 @@ public class GameServerUDP<K> extends GameConnectionServer<UUID>
 		message += "," + ballX;
 		message += "," + ballY;
 		message += "," + ballZ;
+		message += "," +  ballHealth;
 		try{
 			forwardPacketToAll(message,firstClient);
 		}
 		catch(IOException i){
 			System.out.println("no ball updates");
 		}
+	}
+
+	public void updateHealth(int health, UUID clientId){
+		ballHealth = health;
+		try{
+            String message = new String("ballHealth," + clientId.toString());
+            message += "," + health;
+            forwardPacketToAll(message, clientId);
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
 	}
 }

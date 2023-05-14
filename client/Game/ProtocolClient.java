@@ -72,20 +72,20 @@ public class ProtocolClient extends GameConnectionClient
 				
 				// Parse out the position into a Vector3f
 				Vector3f ghostPosition = new Vector3f(
-					Float.parseFloat(messageTokens[2]),
-					Float.parseFloat(messageTokens[3]),
-					Float.parseFloat(messageTokens[4]));
+                Float.parseFloat(messageTokens[2]),
+                Float.parseFloat(messageTokens[3]),
+                Float.parseFloat(messageTokens[4]));
 				
 				ghostManager.updateGhostAvatar(ghostID, ghostPosition);
             }
             if(messageTokens[0].compareTo("createBall") == 0) { 
                 Vector3f ballPosition = new Vector3f(
-					Float.parseFloat(messageTokens[2]), //X
-					Float.parseFloat(messageTokens[3]), //Y
-					Float.parseFloat(messageTokens[4]));//Z
-                    ballHealth = Integer.parseInt(messageTokens[5]);
-                    game.createBall(ballPosition);
-                    game.updateBallHealth(ballHealth);
+                Float.parseFloat(messageTokens[2]), //X
+                Float.parseFloat(messageTokens[3]), //Y
+                Float.parseFloat(messageTokens[4]));//Z
+                ballHealth = Integer.parseInt(messageTokens[5]);
+                game.createBall(ballPosition);
+                game.updateBallHealth(ballHealth);
             }
             if(messageTokens[0].compareTo("getBall") == 0) { 
                 Vector3f ballLoc = game.getBallLoc();
@@ -93,12 +93,12 @@ public class ProtocolClient extends GameConnectionClient
             }
             if(messageTokens[0].compareTo("crUpdateBall") == 0) { 
                 Vector3f ballPosition = new Vector3f(
-					Float.parseFloat(messageTokens[2]), //X
-					Float.parseFloat(messageTokens[3]), //Y
-					Float.parseFloat(messageTokens[4]));//Z
-                    ballHealth = Integer.parseInt(messageTokens[5]);
-                    game.createBall(ballPosition);
-                    game.updateBallHealth(ballHealth);
+                Float.parseFloat(messageTokens[2]), //X
+                Float.parseFloat(messageTokens[3]), //Y
+                Float.parseFloat(messageTokens[4]));//Z
+                ballHealth = Integer.parseInt(messageTokens[5]);
+                game.createBall(ballPosition);
+                game.updateBallHealth(ballHealth);
             }
             if(messageTokens[0].compareTo("ballHealth") == 0) { 
                 ballHealth = Integer.parseInt(messageTokens[2]);
